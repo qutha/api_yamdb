@@ -1,12 +1,19 @@
-from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView
+from rest_framework import routers
 
+from .views import UserViewSet
+
+
+app_name = 'api'
+
+router = routers.DefaultRouter()
+router.register('users', UserViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('redoc/',
-         TemplateView.as_view(template_name='redoc.html'),
-         name='redoc'),
-    path('', include('api.urls', namespace='api')),
+    path('', include(router.urls)),
+    # Djoser создаст набор необходимых эндпоинтов.
+    # базовые, для управления пользователями в Django:
+    path('auth/', include('djoser.urls')),
+    # JWT-эндпоинты, для управления JWT-токенами:
+    path('auth/', include('djoser.urls.jwt')),
 ]
