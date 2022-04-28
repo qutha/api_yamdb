@@ -56,11 +56,11 @@ class Titles(models.Model):
         default='Будет определено админом позже',
         related_name='genres'
     )
-    cotegory = models.ForeignKey(
+    category = models.ForeignKey(
         Categories,
         on_delete=models.SET_DEFAULT,
         default='Будет определено админом позже',
-        related_name='cotegories'
+        related_name='categories'
     )
 
     def __str__(self):
