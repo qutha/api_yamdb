@@ -1,19 +1,53 @@
-from django.db import models
 from django.contrib.auth import get_user_model
+from django.db import models
+
 
 import datetime
 
 from django.core.validators import MaxValueValidator
 
-day = datetime.date.today()
 
 User = get_user_model()
+day = datetime.date.today()
+
+
+class Title(models.Model):
+    objects = models.Manager()
+    name = models.CharField(
+        max_length=256,
+        verbose_name='Название'
+    )
+    description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name='Описание'
+    )
+    year = models.PositiveIntegerField(
+        verbose_name='Год выпуска',
+        validators=(MaxValueValidator(day.year),)
+    )
+    models.IntegerField()
+    genre = models.ForeignKey(
+        'Genre',
+        on_delete=models.SET_DEFAULT,
+        default='Будет определено админом позже',
+        related_name='genres'
+    )
+    category = models.ForeignKey(
+        'Category',
+        on_delete=models.SET_DEFAULT,
+        default='Будет определено админом позже',
+        related_name='categories'
+    )
+
+    def __str__(self):
+        return self.name
 
 
 class Comment(models.Model):
     objects = models.Manager()
     author = models.ForeignKey(
-        User, on_delete=models.CASCADE, related_name='comments'
+        'users.User', on_delete=models.CASCADE, related_name='comments'
     )
     review = models.ForeignKey(
         'Review', on_delete=models.CASCADE, related_name='comments'
@@ -44,12 +78,16 @@ class Review(models.Model):
         User, on_delete=models.CASCADE, related_name='posts'
     )
     composition = models.ForeignKey(
-        'Title', on_delete=models.CASCADE,
+        Title, on_delete=models.CASCADE, related_name='reviews'
     )
     score = models.PositiveSmallIntegerField(choices=SCORE_CHOICES)
 
+    class Meta:
+        unique_together = ('author', 'composition')
 
-class Categories(models.Model):
+
+class Category(models.Model):
+    objects = models.Manager()
     name = models.CharField(
         max_length=256,
         unique=True
@@ -63,47 +101,12 @@ class Categories(models.Model):
         return self.name
 
 
-class Genres(models.Model):
+class Genre(models.Model):
     name = models.TextField(
         unique=True
     )
     slug = models.SlugField(
         unique=True
-    )
-
-    def __str__(self):
-        return self.name
-
-
-class Titles(models.Model):
-    name = models.CharField(
-        max_length=256,
-        verbose_name='Название'
-    )
-    description = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name='Описание'
-    )
-    year = models.PositiveIntegerField(
-        verbose_name='Год выпуска',
-        validators=(MaxValueValidator(day.year),)
-    )
-    rating = models.FloatField(
-        verbose_name='Рейтинг произведения',
-        blank=True,
-        null=True)
-    genre = models.ForeignKey(
-        Genres,
-        on_delete=models.SET_DEFAULT,
-        default='Будет определено админом позже',
-        related_name='genres'
-    )
-    category = models.ForeignKey(
-        Categories,
-        on_delete=models.SET_DEFAULT,
-        default='Будет определено админом позже',
-        related_name='categories'
     )
 
     def __str__(self):

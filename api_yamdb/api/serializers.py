@@ -1,43 +1,54 @@
+from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.serializers import ModelSerializer
 from rest_framework.validators import UniqueValidator
 
-from reviews.models import Categories, Genres, Titles, Review
+from reviews.models import Category, Genre, Title, Review, Comment
 from users.models import User
 
 
-class CategoriesSerializer(serializers.ModelSerializer):
+class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
-        model = Categories
+        model = Comment
 
 
-class GenresSerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         fields = '__all__'
-        model = Genres
+        model = Category
 
 
-class TitlesSerializer(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
+    class Meta:
+        fields = '__all__'
+        model = Genre
+
+
+class TitleSerializer(serializers.ModelSerializer):
+    rating = serializers.SerializerMethodField()
     category = serializers.SlugRelatedField(
         slug_field='name',
-        queryset=Categories.objects.all()
+        queryset=Category.objects.all()
     )
     genre = serializers.SlugRelatedField(
         slug_field='name',
         many=True,
-        queryset=Genres.objects.all()
+        queryset=Genre.objects.all()
     )
 
     class Meta:
         fields = '__all__'
-        model = Titles
+        model = Title
+
+    def get_rating(self, obj):
+        return obj.reviews.all().aggregate(Avg('rating'))['rating__avg']
 
 
 class ReviewSerializer(ModelSerializer):
     class Meta:
         model = Review
-        fields = ('text', 'author', 'score', 'pub_date')
+        fields = ('id', 'text', 'author', 'score', 'pub_date')
 
 
 class ValidateUsername:
