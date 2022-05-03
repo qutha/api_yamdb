@@ -68,10 +68,14 @@ class UserSerializer(serializers.ModelSerializer, ValidateUsername):
         model = User
         fields = ('username',
                   'email', 'first_name', 'last_name', 'bio', 'role')
-        read_only_fields = ('role',)
+        # read_only_fields = ('role',)
 
 
-class RegisterUserSerializer(serializers.ModelSerializer, ValidateUsername):
+class UserRoleOnlyReadSerializer(UserSerializer):
+    role = serializers.StringRelatedField(read_only=True)
+
+
+class RegisterUserSerializer(UserSerializer):
 
     class Meta:
         model = User

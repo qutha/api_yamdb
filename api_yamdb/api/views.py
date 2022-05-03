@@ -18,7 +18,7 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 
 from users.models import User
-from .serializers import UserSerializer, RegisterUserSerializer, AccessTokenSerializer
+from .serializers import UserSerializer, RegisterUserSerializer, AccessTokenSerializer, UserRoleOnlyReadSerializer
 from .services import send_confirmation_code
 from .permissions import IsAdminRole, IsModeratorRole
 
@@ -70,7 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer = self.get_serializer(user, data=request.data, partial=True)
+        serializer = UserRoleOnlyReadSerializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)
