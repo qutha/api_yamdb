@@ -27,10 +27,8 @@ class Title(models.Model):
         verbose_name='Год выпуска',
         validators=(MaxValueValidator(day.year),)
     )
-    models.IntegerField()
-    genre = models.ForeignKey(
+    genre = models.ManyToManyField(
         'Genre',
-        on_delete=models.SET_DEFAULT,
         default='Будет определено админом позже',
         related_name='genres'
     )
@@ -40,6 +38,8 @@ class Title(models.Model):
         default='Будет определено админом позже',
         related_name='categories'
     )
+
+
 
     def __str__(self):
         return self.name
