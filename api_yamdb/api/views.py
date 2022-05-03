@@ -1,3 +1,4 @@
+import django_filters
 from django.contrib.auth.tokens import default_token_generator
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,21 +14,18 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.models import Category, Genre, Title, Review, Comment
 from users.models import User
-from .permissions import IsAdminOrReadOnly
 from .permissions import IsAdminRole
 from .serializers import (
     CategorySerializer, GenreSerializer, TitleSerializer, ReviewSerializer,
     CommentSerializer, UserRoleOnlyReadSerializer, TitleReadSerializer,
-)
-from .serializers import (
-    UserSerializer, RegisterUserSerializer,
-    AccessTokenSerializer,
+    UserSerializer, RegisterUserSerializer, AccessTokenSerializer,
 )
 from .services import send_confirmation_code
+from .filters import TitleFilter
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
 
@@ -44,7 +42,12 @@ class TitleViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminRole,)
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
+    # filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
+    """
+    Добавил класс фильтрации, тк иначе фильтрация в формате ?genre__slug=genre,
+    а нужна ?genre=genre
+    """
+    filterset_class = TitleFilter
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
