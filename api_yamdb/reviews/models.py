@@ -39,7 +39,8 @@ class Title(models.Model):
         related_name='categories'
     )
 
-
+    class Meta:
+        ordering = ('id',)
 
     def __str__(self):
         return self.name
@@ -57,6 +58,9 @@ class Comment(models.Model):
     pub_date = models.DateTimeField(
         'Дата добавления', auto_now_add=True, db_index=True
     )
+
+    class Meta:
+        ordering = ('id',)
 
 
 class Review(models.Model):
@@ -78,13 +82,14 @@ class Review(models.Model):
     author = models.ForeignKey(
         User, on_delete=models.CASCADE, related_name='posts'
     )
-    composition = models.ForeignKey(
+    title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews'
     )
     score = models.PositiveSmallIntegerField(choices=SCORE_CHOICES)
 
     class Meta:
-        unique_together = ('author', 'composition')
+        unique_together = ('author', 'title')
+        ordering = ('id',)
 
 
 class Category(models.Model):
@@ -98,6 +103,9 @@ class Category(models.Model):
         unique=True
     )
 
+    class Meta:
+        ordering = ('id',)
+
     def __str__(self):
         return self.name
 
@@ -109,6 +117,9 @@ class Genre(models.Model):
     slug = models.SlugField(
         unique=True
     )
+
+    class Meta:
+        ordering = ('id',)
 
     def __str__(self):
         return self.name
