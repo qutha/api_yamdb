@@ -113,12 +113,8 @@ class Category(models.Model):
 
 class Genre(models.Model):
     """Модель жанров произведений."""
-    name = models.TextField(
-        unique=True
-    )
-    slug = models.SlugField(
-        unique=True
-    )
+    name = models.TextField(unique=True)
+    slug = models.SlugField(unique=True)
 
     class Meta:
         ordering = ('id',)

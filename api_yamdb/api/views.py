@@ -85,10 +85,12 @@ class TitleViewSet(viewsets.ModelViewSet):
         return (IsAdminRole(),)
 
 
-class ListCreateDestroyViewSet(mixins.CreateModelMixin,
-                               mixins.DestroyModelMixin,
-                               mixins.ListModelMixin,
-                               GenericViewSet):
+class ListCreateDestroyViewSet(
+    mixins.CreateModelMixin,
+    mixins.DestroyModelMixin,
+    mixins.ListModelMixin,
+    GenericViewSet
+):
     pass
 
 
@@ -148,8 +150,10 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminRole, )
     search_fields = ('username',)
 
-    @action(detail=False, url_path='me', methods=['GET', 'PATCH'],
-            permission_classes=(IsAuthenticated,))
+    @action(
+        detail=False, url_path='me', methods=['GET', 'PATCH'],
+        permission_classes=(IsAuthenticated,)
+    )
     def current_user(self, request):
         """
         Дополнительный эндпоинт:
@@ -162,7 +166,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_200_OK)
         serializer = UserRoleOnlyReadSerializer(
             user, data=request.data, partial=True
-            )
+        )
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data, status=status.HTTP_200_OK)

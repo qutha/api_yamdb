@@ -105,7 +105,7 @@ class UserSerializer(serializers.ModelSerializer):
             UniqueValidator(
                 queryset=User.objects.all(),
                 message="Username должен быть уникальным"
-                ),
+            ),
         ),
     )
     email = serializers.EmailField(
@@ -113,7 +113,7 @@ class UserSerializer(serializers.ModelSerializer):
             UniqueValidator(
                 queryset=User.objects.all(),
                 message="Emain должен быть уникальным"
-                ),
+            ),
         ),
     )
 

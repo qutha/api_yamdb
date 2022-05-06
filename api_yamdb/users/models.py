@@ -13,12 +13,13 @@ class User(AbstractUser):
     """
     Добавление к стандартной модели User полей с биографией и ролью.
     """
-    bio = models.TextField(verbose_name='Биография',
-                           blank=True,)
-    role = models.CharField(verbose_name='Роль',
-                            max_length=50,
-                            choices=CHOICES,
-                            default='user')
+    bio = models.TextField(verbose_name='Биография', blank=True)
+    role = models.CharField(
+        verbose_name='Роль',
+        max_length=50,
+        choices=CHOICES,
+        default='user'
+    )
 
     class Meta:
         verbose_name = 'Пользователь'
