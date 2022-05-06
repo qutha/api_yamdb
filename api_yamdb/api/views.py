@@ -22,24 +22,19 @@ from .services import send_confirmation_code
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
+    """
+    Доступные эндпоинты:
+    /titles/{title_id}/reviews/ - GET, POST;
+    /titles/{title_id}/reviews/{review_id}/ - GET, PATCH, DELETE.
+    """
     serializer_class = ReviewSerializer
     permission_classes = (IsAdminRole | IsModeratorRole | IsAuthor,)
     pagination_class = PageNumberPagination
-    # filter_backends = (DjangoFilterBackend,)
-    # filterset_fields = ('name',)
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
         queryset = title.reviews.all()
         return queryset
-
-    # def get_permissions(self):
-    #     if self.request.method in ('GET',):
-    #         return (AllowAny(),)
-    #     elif self.request.method == 'POST':
-    #         return (IsAuthenticated(),)
-    #     elif self.request.method in ('PATCH', 'DELETE'):
-    #         return (IsAdminRole(),)
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -47,6 +42,12 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class CommentViewSet(viewsets.ModelViewSet):
+    """
+    Доступные эндпоинты:
+    /titles/{title_id}/reviews/{review_id}/comments/ - GET, POST;
+    /titles/{title_id}/reviews/{review_id}/comments/{comment_id}/ - GET,
+    PATCH, DELETE.
+    """
     serializer_class = CommentSerializer
     permission_classes = (IsAdminRole | IsModeratorRole | IsAuthor,)
 
@@ -61,16 +62,16 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
+    """
+    Доступные эндпоинты:
+    /titles/ - GET, POST;
+    /titles/{titles_id}/ - GET, PATCH, DELETE.
+    Фильтрация по полям - name, genre, category, year.
+    """
     queryset = Title.objects.all()
     serializer_class = TitleReadSerializer
-    permission_classes = (AllowAny,)
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
-    # filterset_fields = ('category__slug', 'genre__slug', 'name', 'year')
-    """
-    Добавил класс фильтрации, тк иначе фильтрация в формате ?genre__slug=genre,
-    а нужна ?genre=genre
-    """
     filterset_class = TitleFilter
 
     def get_serializer_class(self):
@@ -84,12 +85,20 @@ class TitleViewSet(viewsets.ModelViewSet):
         return (IsAdminRole(),)
 
 
-class CategoryViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    GenericViewSet,
-):
+class ListCreateDestroyViewSet(mixins.CreateModelMixin,
+                               mixins.DestroyModelMixin,
+                               mixins.ListModelMixin,
+                               GenericViewSet):
+    pass
+
+
+class CategoryViewSet(ListCreateDestroyViewSet):
+    """
+    Доступные эндпоинты
+    /categories/ - GET, POST;
+    /categories/{slug}/ - DELETE.
+    Поиск по полю - name.
+    """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = (IsAdminRole,)
@@ -104,12 +113,13 @@ class CategoryViewSet(
         return (IsAdminRole(),)
 
 
-class GenreViewSet(
-    mixins.CreateModelMixin,
-    mixins.DestroyModelMixin,
-    mixins.ListModelMixin,
-    GenericViewSet,
-):
+class GenreViewSet(ListCreateDestroyViewSet):
+    """
+    Доступные эндпоинты
+    /genres/ - GET, POST;
+    /genres/{slug}/ - DELETE.
+    Поиск по полю - name.
+    """
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     permission_classes = (IsAdminRole,)
@@ -125,6 +135,12 @@ class GenreViewSet(
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """
+    Доступны эндпоинты
+    /users/ - GET, POST;
+    /users/{username}/ - GET, PATCH, DELETE.
+    Поиск по полю - username.
+    """
     queryset = User.objects.all()
     serializer_class = UserSerializer
     filter_backends = (filters.SearchFilter,)
@@ -132,8 +148,14 @@ class UserViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminRole, )
     search_fields = ('username',)
 
-    @action(detail=False, url_path='me', methods=['GET', 'PATCH'], permission_classes=(IsAuthenticated,))
+    @action(detail=False, url_path='me', methods=['GET', 'PATCH'],
+            permission_classes=(IsAuthenticated,))
     def current_user(self, request):
+        """
+        Дополнительный эндпоинт:
+        /users/me/ - GET, PATCH;
+        Просмотр и редактирование собственного профиля.
+        """
         user = get_object_or_404(User, pk=request.user.pk)
         if request.method == 'GET':
             serializer = self.get_serializer(user)
@@ -149,6 +171,11 @@ class UserViewSet(viewsets.ModelViewSet):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def signup(request):
+    """
+    Эндпоинт:
+    /auth/signup/ - POST;
+    Регистрация пользователя.
+    """
     serializer = RegisterUserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
@@ -160,6 +187,11 @@ def signup(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def token(request):
+    """
+    Эндпоинт:
+    /auth/token/ - POST;
+    Получить токен для аутентификации.
+    """
     serializer = AccessTokenSerializer(data=request.data)
     if not serializer.is_valid():
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

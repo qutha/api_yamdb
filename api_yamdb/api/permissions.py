@@ -1,20 +1,8 @@
 from rest_framework import permissions
 
 
-class IsAdminOrReadOnly(permissions.IsAdminUser):
-    def has_permission(self, request, view):
-        return (
-            request.method in permissions.SAFE_METHODS
-        )
-
-    def has_object_permission(self, request, view, obj):
-        user = request.user
-        if user.is_authenticated and user.is_admin or user.is_superuser:
-            return True
-        return False
-
-
 class IsAdminRole(permissions.BasePermission):
+    """Права для пользователя с ролью admin."""
     def has_permission(self, request, view):
         user = request.user
         return user.is_authenticated and user.is_admin or user.is_superuser
@@ -25,6 +13,7 @@ class IsAdminRole(permissions.BasePermission):
 
 
 class IsModeratorRole(permissions.BasePermission):
+    """Права для пользователя с ролью moderator."""
     def has_permission(self, request, view):
         user = request.user
         return user.is_authenticated and user.is_moderator
@@ -35,6 +24,7 @@ class IsModeratorRole(permissions.BasePermission):
 
 
 class IsAuthor(permissions.BasePermission):
+    """Права для автора записи."""
     def has_permission(self, request, view):
         return (request.method in permissions.SAFE_METHODS
                 or request.user.is_authenticated)

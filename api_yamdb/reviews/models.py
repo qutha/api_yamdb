@@ -1,11 +1,8 @@
-
-from django.contrib.auth import get_user_model
-from django.db import models
-
-
 import datetime
 
+from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator
+from django.db import models
 
 
 User = get_user_model()
@@ -13,6 +10,7 @@ day = datetime.date.today()
 
 
 class Title(models.Model):
+    """Модель произведения."""
     objects = models.Manager()
     name = models.CharField(
         max_length=256,
@@ -47,6 +45,7 @@ class Title(models.Model):
 
 
 class Comment(models.Model):
+    """Модель комментариев к ревью, которые могут оставлять пользователи."""
     objects = models.Manager()
     author = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, related_name='comments'
@@ -64,6 +63,7 @@ class Comment(models.Model):
 
 
 class Review(models.Model):
+    """Модель ревью к произведениям, которые могут оставлять пользователи."""
     SCORE_CHOICES = (
         (1, '1'),
         (2, '2'),
@@ -93,6 +93,7 @@ class Review(models.Model):
 
 
 class Category(models.Model):
+    """Модель категорий произведений."""
     objects = models.Manager()
     name = models.CharField(
         max_length=256,
@@ -111,6 +112,7 @@ class Category(models.Model):
 
 
 class Genre(models.Model):
+    """Модель жанров произведений."""
     name = models.TextField(
         unique=True
     )

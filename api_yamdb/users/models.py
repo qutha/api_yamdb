@@ -10,6 +10,9 @@ CHOICES = (
 
 
 class User(AbstractUser):
+    """
+    Добавление к стандартной модели User полей с биографией и ролью.
+    """
     bio = models.TextField(verbose_name='Биография',
                            blank=True,)
     role = models.CharField(verbose_name='Роль',
