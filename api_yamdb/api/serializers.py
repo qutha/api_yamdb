@@ -1,4 +1,3 @@
-from django.db.models import Avg
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -11,21 +10,21 @@ class CommentSerializer(serializers.ModelSerializer):
     author = serializers.ReadOnlyField(source='author.username')
 
     class Meta:
-        fields = ('id', 'text', 'author', 'pub_date')
+        fields = ('id', 'text', 'author', 'pub_date',)
         model = Comment
 
 
 class CategorySerializer(serializers.ModelSerializer):
     """Сериализатор для модели Category."""
     class Meta:
-        fields = ('name', 'slug')
+        fields = ('name', 'slug',)
         model = Category
 
 
 class GenreSerializer(serializers.ModelSerializer):
     """Сериализатор для модели Genre."""
     class Meta:
-        fields = ('name', 'slug')
+        fields = ('name', 'slug',)
         model = Genre
 
 
@@ -45,7 +44,9 @@ class TitleSerializer(serializers.ModelSerializer):
     )
 
     class Meta:
-        fields = ('id', 'name', 'description', 'year', 'genre', 'category',)
+        fields = (
+            'id', 'name', 'description', 'year', 'genre', 'category',
+        )
         model = Title
 
 
@@ -54,24 +55,16 @@ class TitleReadSerializer(serializers.ModelSerializer):
     Сериализатор для модели Title.
     Используется для методов группы SAFE_METHODS.
     """
-    rating = serializers.SerializerMethodField()
+    rating = serializers.IntegerField()
     genre = GenreSerializer(many=True)
     category = CategorySerializer()
 
     class Meta:
-        fields = ('id', 'name', 'description', 'year', 'genre', 'category',
-                  'rating',)
+        fields = (
+            'id', 'name', 'description', 'year', 'genre', 'category',
+            'rating',
+        )
         model = Title
-
-    def get_rating(self, obj):
-        """
-        Метод возвращает рейтинг произведения на основании средней оценки
-        выставляемой ревьюерами для данного произвденения.
-        """
-        rating = obj.reviews.all().aggregate(Avg('score'))['score__avg']
-        if not rating:
-            return rating
-        return round(rating, 1)
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -80,7 +73,7 @@ class ReviewSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Review
-        fields = ('id', 'text', 'author', 'score', 'pub_date')
+        fields = ('id', 'text', 'author', 'score', 'pub_date',)
 
     def validate(self, data):
         """
@@ -89,13 +82,26 @@ class ReviewSerializer(serializers.ModelSerializer):
         отзыв. Иначе возвращает исключение.
         """
         author = self.context.get('request').user
-        title_id = self.context.get('view').kwargs.get('title_id')
+        title_id = (
+            self.context.get('request').parser_context.get('kwargs')
+                .get('title_id')
+        )
         if self.context.get('request').method == 'POST':
             if Review.objects.filter(author=author, title=title_id).exists():
                 raise serializers.ValidationError(
                     'У автора может быть лишь один отызв на одно произведение!'
                 )
         return data
+
+
+class CodeResetSerializer(serializers.Serializer):
+    """Сериализатор для повторной отправки кода аутентификации."""
+    username = serializers.CharField(required=True)
+    email = serializers.EmailField(required=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email',)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -112,21 +118,22 @@ class UserSerializer(serializers.ModelSerializer):
         validators=(
             UniqueValidator(
                 queryset=User.objects.all(),
-                message="Emain должен быть уникальным"
+                message='Email должен быть уникальным'
             ),
         ),
     )
 
     class Meta:
         model = User
-        fields = ('username',
-                  'email', 'first_name', 'last_name', 'bio', 'role')
+        fields = (
+            'username', 'email', 'first_name', 'last_name', 'bio', 'role',
+        )
 
     def validate_username(self, username):
         """Метод проверяет, что имя пользователя не равно "ме"."""
         if username == 'me':
             raise serializers.ValidationError(
-                'Имя пользователя \'me\' запрещено!'
+                "Имя пользователя 'me' запрещено!"
             )
         return username
 
@@ -150,4 +157,4 @@ class AccessTokenSerializer(serializers.Serializer):
 
     class Meta:
         model = User
-        fields = ('username', 'confirmation_code')
+        fields = ('username', 'confirmation_code',)

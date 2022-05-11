@@ -28,9 +28,9 @@ INSTALLED_APPS = [
     'django_filters',
     'rest_framework_simplejwt',
 
+    'users.apps.UsersConfig',
     'reviews.apps.ReviewsConfig',
     'api.apps.ApiConfig',
-    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -143,4 +143,4 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-ADMIN_EMAIL = 'register@register.ru'
+ADMIN_EMAIL = 'toskuef@yandex.ru'

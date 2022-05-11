@@ -1,4 +1,5 @@
 from django.contrib.auth.tokens import default_token_generator
+from django.db.models import Avg
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters, permissions, mixins, viewsets, status
@@ -9,14 +10,15 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from reviews.models import Category, Genre, Title, Review
+from reviews.filters import TitleFilter
+from reviews.models import Category, Genre, Title
 from users.models import User
-from .filters import TitleFilter
 from .permissions import IsAdminRole, IsModeratorRole, IsAuthor
 from .serializers import (
     CategorySerializer, GenreSerializer, TitleSerializer, ReviewSerializer,
     CommentSerializer, UserRoleOnlyReadSerializer, TitleReadSerializer,
     UserSerializer, RegisterUserSerializer, AccessTokenSerializer,
+    CodeResetSerializer,
 )
 from .services import send_confirmation_code
 
@@ -33,8 +35,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        queryset = title.reviews.all()
-        return queryset
+        return title.reviews.all()
 
     def perform_create(self, serializer):
         title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
@@ -52,12 +53,15 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminRole | IsModeratorRole | IsAuthor,)
 
     def get_queryset(self):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
-        queryset = review.comments.all()
-        return queryset
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        reviews = title.reviews.all()
+        review = get_object_or_404(reviews, pk=self.kwargs.get('review_id'))
+        return review.comments.all()
 
     def perform_create(self, serializer):
-        review = get_object_or_404(Review, pk=self.kwargs.get('review_id'))
+        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
+        reviews = title.reviews.all()
+        review = get_object_or_404(reviews, pk=self.kwargs.get('review_id'))
         serializer.save(author=self.request.user, review=review)
 
 
@@ -73,6 +77,11 @@ class TitleViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = TitleFilter
+
+    def get_queryset(self):
+        return (
+            Title.objects.annotate(rating=Avg('reviews__score')).order_by('id')
+        )
 
     def get_serializer_class(self):
         if self.request.method in permissions.SAFE_METHODS:
@@ -103,7 +112,6 @@ class CategoryViewSet(ListCreateDestroyViewSet):
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminRole,)
     pagination_class = PageNumberPagination
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -124,7 +132,6 @@ class GenreViewSet(ListCreateDestroyViewSet):
     """
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminRole,)
     pagination_class = PageNumberPagination
     lookup_field = 'slug'
     filter_backends = (filters.SearchFilter,)
@@ -210,3 +217,21 @@ def token(request):
     return Response(
         {'token': str(access_token.access_token)}, status=status.HTTP_200_OK
     )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def code_reset(request):
+    """
+    Эндпоинт:
+    /auth/reset/ - POST;
+    Отправить код аутентификации повторно.
+    """
+    serializer = CodeResetSerializer(data=request.data)
+    if serializer.is_valid():
+        username = serializer.data['username']
+        email = serializer.data['email']
+        user = get_object_or_404(User, username=username, email=email)
+        send_confirmation_code(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

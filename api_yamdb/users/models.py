@@ -1,11 +1,12 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+USER_ROLE, MODERATOR_ROLE, ADMIN_ROLE = 'user', 'moderator', 'admin'
 
 CHOICES = (
-    ('user', 'Аутентифицированный пользователь'),
-    ('moderator', 'Модератор'),
-    ('admin', 'Администратор'),
+    (USER_ROLE, 'Аутентифицированный пользователь'),
+    (MODERATOR_ROLE, 'Модератор'),
+    (ADMIN_ROLE, 'Администратор'),
 )
 
 
@@ -18,7 +19,7 @@ class User(AbstractUser):
         verbose_name='Роль',
         max_length=50,
         choices=CHOICES,
-        default='user'
+        default=USER_ROLE,
     )
 
     class Meta:
@@ -31,12 +32,12 @@ class User(AbstractUser):
 
     @property
     def is_admin(self):
-        return self.role == 'admin'
+        return self.role == ADMIN_ROLE
 
     @property
     def is_moderator(self):
-        return self.role == 'moderator'
+        return self.role == MODERATOR_ROLE
 
     @property
     def is_user(self):
-        return self.role == 'user'
+        return self.role == USER_ROLE

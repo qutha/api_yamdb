@@ -6,12 +6,10 @@ from django.db import models
 
 
 User = get_user_model()
-day = datetime.date.today()
 
 
 class Title(models.Model):
     """Модель произведения."""
-    objects = models.Manager()
     name = models.CharField(
         max_length=256,
         verbose_name='Название'
@@ -23,7 +21,7 @@ class Title(models.Model):
     )
     year = models.PositiveIntegerField(
         verbose_name='Год выпуска',
-        validators=(MaxValueValidator(day.year),)
+        validators=(MaxValueValidator(datetime.date.today().year),)
     )
     genre = models.ManyToManyField(
         'Genre',
@@ -46,7 +44,6 @@ class Title(models.Model):
 
 class Comment(models.Model):
     """Модель комментариев к ревью, которые могут оставлять пользователи."""
-    objects = models.Manager()
     author = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, related_name='comments'
     )
@@ -64,19 +61,7 @@ class Comment(models.Model):
 
 class Review(models.Model):
     """Модель ревью к произведениям, которые могут оставлять пользователи."""
-    SCORE_CHOICES = (
-        (1, '1'),
-        (2, '2'),
-        (3, '3'),
-        (4, '4'),
-        (5, '5'),
-        (6, '6'),
-        (7, '7'),
-        (8, '8'),
-        (9, '9'),
-        (10, '10'),
-    )
-    objects = models.Manager()
+    SCORE_CHOICES = ((score, f'{score}') for score in range(1, 11))
     text = models.TextField()
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
     author = models.ForeignKey(
@@ -94,14 +79,12 @@ class Review(models.Model):
 
 class Category(models.Model):
     """Модель категорий произведений."""
-    objects = models.Manager()
     name = models.CharField(
         max_length=256,
         unique=True
     )
     slug = models.SlugField(
-        max_length=50,
-        unique=True
+        unique=True,
     )
 
     class Meta:
