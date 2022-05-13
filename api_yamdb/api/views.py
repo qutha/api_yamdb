@@ -11,12 +11,12 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from reviews.filters import TitleFilter
-from reviews.models import Category, Genre, Title
+from reviews.models import Category, Genre, Title, Review
 from users.models import User
 from .permissions import IsAdminRole, IsModeratorRole, IsAuthor
 from .serializers import (
     CategorySerializer, GenreSerializer, TitleSerializer, ReviewSerializer,
-    CommentSerializer, UserRoleOnlyReadSerializer, TitleReadSerializer,
+    CommentSerializer, TitleReadSerializer,
     UserSerializer, RegisterUserSerializer, AccessTokenSerializer,
     CodeResetSerializer,
 )
@@ -53,15 +53,17 @@ class CommentViewSet(viewsets.ModelViewSet):
     permission_classes = (IsAdminRole | IsModeratorRole | IsAuthor,)
 
     def get_queryset(self):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        reviews = title.reviews.all()
-        review = get_object_or_404(reviews, pk=self.kwargs.get('review_id'))
+        review = get_object_or_404(
+            Review, title__id=self.kwargs.get('title_id'),
+            pk=self.kwargs.get('review_id')
+        )
         return review.comments.all()
 
     def perform_create(self, serializer):
-        title = get_object_or_404(Title, pk=self.kwargs.get('title_id'))
-        reviews = title.reviews.all()
-        review = get_object_or_404(reviews, pk=self.kwargs.get('review_id'))
+        review = get_object_or_404(
+            Review, title__id=self.kwargs.get('title_id'),
+            pk=self.kwargs.get('review_id')
+        )
         serializer.save(author=self.request.user, review=review)
 
 
@@ -98,7 +100,7 @@ class ListCreateDestroyViewSet(
     mixins.CreateModelMixin,
     mixins.DestroyModelMixin,
     mixins.ListModelMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     pass
 
@@ -159,7 +161,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(
         detail=False, url_path='me', methods=['GET', 'PATCH'],
-        permission_classes=(IsAuthenticated,)
+        permission_classes=(IsAuthenticated,),
     )
     def current_user(self, request):
         """
@@ -171,11 +173,11 @@ class UserViewSet(viewsets.ModelViewSet):
         if request.method == 'GET':
             serializer = self.get_serializer(user)
             return Response(serializer.data, status=status.HTTP_200_OK)
-        serializer = UserRoleOnlyReadSerializer(
+        serializer = self.get_serializer(
             user, data=request.data, partial=True
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(role=user.role)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -190,6 +192,7 @@ def signup(request):
     serializer = RegisterUserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        """Сбросить код на строке 227"""
         send_confirmation_code(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

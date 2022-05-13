@@ -1,7 +1,5 @@
-import datetime
-
 from django.contrib.auth import get_user_model
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -19,9 +17,9 @@ class Title(models.Model):
         blank=True,
         verbose_name='Описание'
     )
+    """Перенесли валидацию в сериализатор"""
     year = models.PositiveIntegerField(
         verbose_name='Год выпуска',
-        validators=(MaxValueValidator(datetime.date.today().year),)
     )
     genre = models.ManyToManyField(
         'Genre',
@@ -61,7 +59,6 @@ class Comment(models.Model):
 
 class Review(models.Model):
     """Модель ревью к произведениям, которые могут оставлять пользователи."""
-    SCORE_CHOICES = ((score, f'{score}') for score in range(1, 11))
     text = models.TextField()
     pub_date = models.DateTimeField('Дата публикации', auto_now_add=True)
     author = models.ForeignKey(
@@ -70,7 +67,9 @@ class Review(models.Model):
     title = models.ForeignKey(
         Title, on_delete=models.CASCADE, related_name='reviews'
     )
-    score = models.PositiveSmallIntegerField(choices=SCORE_CHOICES)
+    score = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(10), MinValueValidator(1)],
+    )
 
     class Meta:
         unique_together = ('author', 'title')

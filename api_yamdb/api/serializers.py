@@ -1,3 +1,5 @@
+import datetime
+
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
@@ -65,6 +67,13 @@ class TitleReadSerializer(serializers.ModelSerializer):
             'rating',
         )
         model = Title
+
+    def validate_year(self, year):
+        if year > datetime.date.today().year:
+            raise serializers.ValidationError(
+                'Год выпуска не может быть больше текущего года'
+            )
+        return year
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -136,11 +145,6 @@ class UserSerializer(serializers.ModelSerializer):
                 "Имя пользователя 'me' запрещено!"
             )
         return username
-
-
-class UserRoleOnlyReadSerializer(UserSerializer):
-    """Сериализатор для модели User без возможности редакторивания роли."""
-    role = serializers.StringRelatedField(read_only=True)
 
 
 class RegisterUserSerializer(UserSerializer):
